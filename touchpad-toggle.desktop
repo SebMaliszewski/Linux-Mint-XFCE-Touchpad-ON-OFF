@@ -1,0 +1,11 @@
+[Desktop Entry]
+Type=Application
+Name=Touchpad on/off
+Name[pl]=Touchpad włącz/wyłącz
+Comment=Toggle laptop touchpad
+Comment[pl]=Włącza lub wyłącza touchpad laptopa
+Exec=touchpad-toggle
+Icon=input-touchpad
+Terminal=false
+Categories=Utility;Settings;HardwareSettings;
+StartupNotify=false

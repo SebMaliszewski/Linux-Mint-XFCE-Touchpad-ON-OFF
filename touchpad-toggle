@@ -1,0 +1,40 @@
+#!/usr/bin/env bash
+# Toggle laptop touchpad (XFCE / Mint / libinput).
+# When disabled, xinput floats the device and prefixes the name with "∼ ",
+# so we always resolve by id matching "Touchpad".
+set -uo pipefail
+
+resolve_id() {
+  # Prefer explicit name match (with optional float prefix), else any Touchpad line.
+  local line id
+  line=$(xinput list 2>/dev/null | grep -i 'Touchpad' | head -1 || true)
+  if [[ -z "$line" ]]; then
+    return 1
+  fi
+  id=$(printf '%s' "$line" | sed -n 's/.*id=\([0-9]\+\).*/\1/p')
+  [[ -n "$id" ]] || return 1
+  printf '%s' "$id"
+}
+
+ID=$(resolve_id || true)
+if [[ -z "${ID:-}" ]]; then
+  notify-send -u critical "Touchpad" "Nie znaleziono touchpada (xinput)." 2>/dev/null || true
+  echo "No touchpad found" >&2
+  exit 1
+fi
+
+PROP=$(xinput list-props "$ID" 2>/dev/null | grep -F 'Device Enabled' | head -1 || true)
+STATE=$(printf '%s' "$PROP" | grep -oE '[01]$' || true)
+STATE=${STATE:-1}
+
+LABEL=$(xinput list --name-only "$ID" 2>/dev/null | sed 's/^∼ //' || echo "Touchpad id=$ID")
+
+if [[ "$STATE" == "1" ]]; then
+  xinput disable "$ID"
+  notify-send -i input-touchpad "Touchpad" "Wyłączony" 2>/dev/null || true
+  echo "disabled: $LABEL (id=$ID)"
+else
+  xinput enable "$ID"
+  notify-send -i input-touchpad "Touchpad" "Włączony" 2>/dev/null || true
+  echo "enabled: $LABEL (id=$ID)"
+fi
